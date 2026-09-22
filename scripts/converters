@@ -1,0 +1,84 @@
+SAMPLER=""
+FILTER8K="audiofilter -n 0.86916 -1.73829 0.86916 -d 1.00000 -1.74152 0.77536"
+
+make8kraw()
+{
+    sox ${VOLADJUST} ${1} -r 8000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw ${SAMPLER}
+    ${FILTER8K} ${1%%.${ORIGFMT}}.raw ${1%%.${ORIGFMT}}.filtered
+    rm -f ${1} ${1%%.${ORIGFMT}}.raw
+    mv ${1%%.${ORIGFMT}}.filtered ${1%%.${ORIGFMT}}.raw
+}
+
+make16kraw()
+{
+    sox ${VOLADJUST} ${1} -r 16000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw ${SAMPLER}
+    rm -f ${1}
+}
+
+make32kraw()
+{
+    sox ${VOLADJUST} ${1} -r 32000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw ${SAMPLER}
+    rm -f ${1}
+}
+
+convertgsm()
+{
+    make8kraw ${1}
+    sox -r 8000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw -t gsm ${1%%.${ORIGFMT}}.gsm
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertalaw()
+{
+    make8kraw ${1}
+    sox -r 8000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw -t al ${1%%.${ORIGFMT}}.alaw
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertulaw()
+{
+    make8kraw ${1}
+    sox -r 8000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw -t ul ${1%%.${ORIGFMT}}.ulaw
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertwav()
+{
+    make8kraw ${1}
+    sox -r 8000 -c 1 -t sw ${1%%.${ORIGFMT}}.raw -t wav ${1%%.${ORIGFMT}}.wav
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertg729()
+{
+    make8kraw ${1}
+    makeg729 ${1%%.${ORIGFMT}}.raw ${1%%.${ORIGFMT}}.g729
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertg722()
+{
+    make16kraw ${1}
+    makeg722 ${1%%.${ORIGFMT}}.raw ${1%%.${ORIGFMT}}.g722
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertsln16()
+{
+    make16kraw ${1}
+    mv ${1%%.${ORIGFMT}}.raw ${1%%.${ORIGFMT}}.sln16
+}
+
+convertsiren7()
+{
+    make16kraw ${1}
+    makesiren7 ${1%%.${ORIGFMT}}.raw ${1%%.${ORIGFMT}}.siren7
+    rm -f ${1%%.${ORIGFMT}}.raw
+}
+
+convertsiren14()
+{
+    make32kraw ${1}
+    makesiren14 ${1%%.${ORIGFMT}}.raw ${1%%.${ORIGFMT}}.siren14
+    rm -f ${1%%.${ORIGFMT}}.raw
+}

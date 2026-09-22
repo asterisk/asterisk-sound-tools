@@ -1,0 +1,26 @@
+#!/bin/bash
+
+# There are several problems with this script.
+# 1) This only checks the first level directory.  It does not check subdirectories.
+# 2) This can be fooled by files that are prefixes of other files.
+# 3) This does not check if there are entries in the .txt file with no .wav file.
+
+for lang in en en_GB fr; do
+	found=0
+	for wav in ../extra/$lang/*.wav ; do
+		base=`basename $wav`
+		base=${base%%.wav}
+		e=`grep ^$base ../extra/$lang/extra-sounds-$lang.txt`
+		if [ "$e" = "" ]; then
+			echo "* Prompt $base is missing from extra/$lang/extra-sounds-$lang.txt. Adding it! Please add prompt description."
+			echo "$base: " >> ../extra/$lang/extra-sounds-$lang.txt
+			found=1
+		fi
+	done
+	if [ "$found" = "1" ]; then
+		echo "Additional prompts found.  Please edit extra/extra-sounds-$lang.txt"
+		echo ""
+	else
+		echo "Prompts and extra/extra-sounds-$lang.txt are in sync. You can now create your sounds release!"
+	fi
+done

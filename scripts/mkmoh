@@ -1,0 +1,62 @@
+#!/bin/sh -e
+
+TGT=`pwd`
+VERSION="2.03"
+BUILD_VENDOR="${1:-opsound}"
+BUILD_FORMAT="${2:-wav ulaw alaw gsm g729 g722 sln16 siren7 siren14}"
+VOLADJUST="-v .5"
+ORIGFMT="wav"
+
+TOOLDIR=`realpath ${0%%mkmoh}`
+
+. ${TOOLDIR}/converters
+
+# args:
+#  1 - package
+#  2 - vendor
+#  3 - version
+#  4 - format
+makeoutput()
+{
+    rm -rf /tmp/sounds-work
+
+    echo "Generating asterisk-${1}-${2}-${4}-${3}"
+    
+    svn -q export ../${1}/${2} /tmp/sounds-work
+    svn cat ../${1}/CHANGES > /tmp/sounds-work/CHANGES
+
+    cd /tmp/sounds-work
+
+    for f in *.${ORIGFMT}
+    do
+	echo "Converting ${f} to ${4}..."
+	eval convert${4} ${f}
+    done
+
+    [ -f LICENSE ] && mv LICENSE LICENSE-asterisk-${1}-${2}-${4}
+    [ -f CREDITS ] && mv CREDITS CREDITS-asterisk-${1}-${2}-${4}
+    [ -f CHANGES ] && mv CHANGES CHANGES-asterisk-${1}-${2}-${4}
+
+    echo "Making tarball..."
+
+    tar --create --gzip --owner 0 --group 0 --file ${TGT}/asterisk-${1}-${2}-${4}-${3}.tar.gz *
+
+    cd ${TGT}
+
+    rm -rf /tmp/sounds-work
+
+    echo "asterisk-${1}-${2}-${4}-${3} done."
+}
+
+echo "You should not see anything between the dashed lines! If you do, stop this and "
+echo "fix the problems outlined."
+echo =====================================================================
+svn status ../moh
+echo =====================================================================
+for v in ${BUILD_VENDOR}
+do
+  for f in ${BUILD_FORMAT}
+  do
+    makeoutput moh ${v} ${VERSION} ${f}
+  done
+done

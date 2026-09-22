@@ -1,0 +1,62 @@
+#!/bin/sh -e
+
+TGT=`pwd`
+VERSION="1.6.1"
+BUILD_LANG="${1:-en en_AU en_GB en_NZ es fr it ja ru sv}"
+BUILD_FORMAT="${2:-wav ulaw alaw gsm g729 g722 sln16 siren7 siren14}"
+VOLADJUST="-v .7"
+ORIGFMT="wav"
+
+TOOLDIR=`realpath ${0%%mkcore}`
+
+. ${TOOLDIR}/converters
+
+# args:
+#  1 - package
+#  2 - language
+#  3 - version number
+#  4 - format
+makeoutput()
+{
+    rm -rf /tmp/sounds-work
+
+    echo "Generating asterisk-${1}-sounds-${2}-${4}-${3}"
+    
+    svn -q export ../${1}/${2} /tmp/sounds-work
+    svn cat ../${1}/CHANGES > /tmp/sounds-work/CHANGES
+
+    cd /tmp/sounds-work
+
+    for f in *.${ORIGFMT} */*.${ORIGFMT}
+    do
+	echo "Converting ${f} to ${4}..."
+	eval convert${4} ${f}
+    done
+
+    [ -f LICENSE ] && mv LICENSE LICENSE-asterisk-${1}-${2}-${3}
+    [ -f CREDITS ] && mv CREDITS CREDITS-asterisk-${1}-${2}-${3}
+    [ -f CHANGES ] && mv CHANGES CHANGES-asterisk-${1}-${2}-${3}
+
+    echo "Making tarball..."
+
+    tar --create --gzip --owner 0 --group 0 --file ${TGT}/asterisk-${1}-sounds-${2}-${4}-${3}.tar.gz *
+
+    cd ${TGT}
+
+    rm -rf /tmp/sounds-work
+
+    echo "asterisk-${1}-sounds-${2}-${4}-${3} done."
+}
+
+echo "You should not see anything between the dashed lines! If you do, stop this and "
+echo "fix the problems outlined."
+echo =====================================================================
+svn status ../core
+echo =====================================================================
+for l in ${BUILD_LANG}
+do
+  for f in ${BUILD_FORMAT}
+  do
+    makeoutput core ${l} ${VERSION} ${f}
+  done
+done
